@@ -48,9 +48,6 @@ class SlangConan(ConanFile):
     def package(self):
         cmake = CMake(self)
         cmake.install()
-        # Copy the license files from the exported sources to the package's licenses folder.
-        copy(self, "LICENSE*", self.export_sources_folder, os.path.join(self.package_folder, "licenses"))
-        copy(self, "LICENSES/*", self.export_sources_folder, os.path.join(self.package_folder, "licenses"))
 
     def package_info(self):
         # Define the exported CMake target.
