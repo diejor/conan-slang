@@ -9,9 +9,9 @@ from conan.tools.files import (
 class SlangConan(ConanFile):
     name         = "slang"
     version      = "2025.6.3"
-    license      = "MIT"      # if you know it
+    license      = "Apache-2.0"
     url          = "https://github.com/shader-slang/slang"
-    homepage     = "https://github.com/shader-slang/slang"
+    homepage     = "https://shader-slang.org/"
     description  = "Slang is a shader tool and compiler for modern GPU shading languages."
     topics       = ("conan", "slang", "shader", "webgpu")
 
@@ -19,32 +19,20 @@ class SlangConan(ConanFile):
     options      = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": False, "fPIC": True}
 
-    # ----------------------------------------------------------------------------
-    def export(self):
-        git = Git(self, self.recipe_folder)
-        url, commit = git.get_url_and_commit()
-        update_conandata(self, {"sources": {"url": url, "commit": commit}})
-
     def layout(self):
         cmake_layout(self)
 
     def source(self):
-        src = self.conan_data["sources"]
+        data = self.conan_data["sources"]
         git = Git(self)
-
-        git.clone(
-            url=src["url"],
-            target=".",
-            args=[
-                "--branch",     src["commit"],
-                "--single-branch",
-                "--depth",      "1",
-            ]
-        )
-
-        git.update_submodules(init=True, recursive=True, args=["--depth", "1"])
-
-        rmdir(self, os.path.join(self.source_folder, ".git"))
+        clone_args = [
+            "--branch", data["commit"],      # checkout by SHA (or tag)
+            "--single-branch",
+            "--depth", "1",
+            "--recursive",                   # pull submodules
+        ]
+        git.clone(url=data["url"], args=clone_args, target=".")
+        rmdir(self, ".git")
 
     def generate(self):
         tc = CMakeToolchain(self, generator="Ninja")
