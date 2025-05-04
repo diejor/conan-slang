@@ -60,33 +60,34 @@ class SlangConan(ConanFile):
         cmake.configure()
         cmake.build()
 
-    def _copy_archives(self, patterns):
-        cand_dirs = [
-            os.path.join(self.build_folder, "lib"),
-            os.path.join(self.build_folder, str(self.settings.build_type), "lib"),
-        ]
-        for d in cand_dirs:
-            for pat in patterns:
-                for f in glob.glob(os.path.join(d, pat)):
-                    copy(self, os.path.basename(f),
-                         src=d, dst=os.path.join(self.package_folder, "lib"))
-
     def package(self):
         cmake = CMake(self)
         cmake.install()
-        if not self.options.shared:
-            # pick up the extra .a files we need
-            self._copy_archives(["libcore*.a",
-                                 "libcompiler-core*.a",
-                                 "libslang-cpp-parser*.a"])
-            # third-party
-            copy(self, "libminiz*.a",
-                 src=os.path.join(self.build_folder, "external", "miniz"),
-                 dst=os.path.join(self.package_folder, "lib"))
-            copy(self, "liblz4*.a",
-                 src=os.path.join(self.build_folder,
-                                  "external", "lz4", "build", "cmake"),
-                 dst=os.path.join(self.package_folder, "lib"))
+
+        build_type = str(self.settings.build_type)
+
+        build_dirs = [
+            self.build_folder,                                    # sometimes outputs to root
+            os.path.join(self.build_folder, build_type),          # e.g. build/Release
+            os.path.join(self.build_folder, "lib"),               # single-config Ninja/Make
+            os.path.join(self.build_folder, build_type, "lib"),   # multi-config + lib subdir
+        ]
+
+        external_dirs = [
+            os.path.join(self.build_folder, "external", "miniz"),
+            os.path.join(self.build_folder, "external", "lz4", "build", "cmake"),
+        ]
+        for base in list(external_dirs):
+            external_dirs.append(os.path.join(base, build_type))
+
+        for d in build_dirs + external_dirs:
+            if os.path.isdir(d):
+                for pat in ("*.a", "*.lib"):
+                    copy(self,
+                         pattern=pat,
+                         src=d,
+                         dst=os.path.join(self.package_folder, "lib"),
+                         keep_path=False)
 
     def package_info(self):
         if self.options.shared:
@@ -97,6 +98,8 @@ class SlangConan(ConanFile):
                 "slang", "compiler-core", "core", "slang-cpp-parser",
                 "slang-rt", "miniz", "lz4",
             ]
+            self.cpp_info.defines = ["SLANG_STATIC"]
+
         self.cpp_info.set_property("cmake_target_name", "slang::slang")
         if self.settings.os == "Linux":
             self.cpp_info.system_libs = ["dl", "pthread", "m"]
