@@ -8,7 +8,7 @@ from conan.tools.files import (
 
 class SlangConan(ConanFile):
     name         = "slang"
-    version      = "2025.6.3"
+    version      = "2025.13.1"
     license      = "Apache-2.0"
     url          = "https://github.com/shader-slang/slang"
     homepage     = "https://shader-slang.org/"
@@ -23,15 +23,14 @@ class SlangConan(ConanFile):
         cmake_layout(self)
 
     def source(self):
-        data = self.conan_data["sources"]
         git = Git(self)
         clone_args = [
-            "--branch", data["commit"],      # checkout by SHA (or tag)
+            "--branch", "v" + self.version,      # checkout by SHA (or tag)
             "--single-branch",
             "--depth", "1",
             "--recursive",                   # pull submodules
         ]
-        git.clone(url=data["url"], args=clone_args, target=".")
+        git.clone(self.url, args=clone_args, target=".")
         rmdir(self, ".git")
 
     def generate(self):
