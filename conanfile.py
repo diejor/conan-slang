@@ -55,37 +55,40 @@ class SlangConan(ConanFile):
         cmake.install()
 
         pkg = Path(self.package_folder)
-        plugindir = pkg / "plugins"
-        mkdir(self, str(plugindir))
+        plugin_exts = {".dll", ".so", ".dylib", ".bundle"}
+        fragments = {"slang-glsl", "slang_glsl", "slang-glslang", "-module", "plugin"}
+        roots = [pkg / "lib", pkg / "lib64", pkg / "bin"]
 
-        candidate_dirs = [pkg / "lib", pkg / "lib64", pkg / "bin"]
-        plugin_fragments = {"slang-glsl", "slang_glsl", "slang-glslang", "-module", "plugin"}
-        plugin_exts = (".dll", ".so", ".dylib", ".bundle")
-
-        def looks_like_plugin(p: Path) -> bool:
+        def is_plugin(p: Path) -> bool:
             n = p.name.lower()
-            return p.suffix.lower() in plugin_exts and any(f in n for f in plugin_fragments)
+            return p.suffix.lower() in plugin_exts and any(f in n for f in fragments)
 
-        for d in candidate_dirs:
-            if not d.is_dir():
-                continue
-            for entry in d.iterdir():
-                if entry.is_file() and looks_like_plugin(entry):
-                    copy(self, entry.name, src=str(d), dst=str(plugindir))
-                    rm(self, str(entry))
+        candidates = []
+        for root in roots:
+            if root.is_dir():
+                for p in root.rglob("*"):
+                    if p.is_file() and is_plugin(p):
+                        candidates.append(p)
+
+        if candidates:
+            plugindir = pkg / "plugins"
+            mkdir(self, str(plugindir))
+            for p in candidates:
+                copy(self, p.name, src=str(p.parent), dst=str(plugindir))
+                rm(self, p.name, folder=str(p.parent))
 
     def package_info(self):
         collected = set(collect_libs(self))
         preferred = ["gfx", "gfx-core", "gfx-base", "slang-rt", "slang"]
         libs = [n for n in preferred if n in collected]
 
-        def is_pluginish(name: str) -> bool:
-            n = name.lower()
+        def is_pluginish(n: str) -> bool:
+            n = n.lower()
             return any(f in n for f in ("glsl", "glslang", "module", "plugin"))
 
         libs += [n for n in sorted(collected) if n not in libs and not is_pluginish(n)]
-
         self.cpp_info.libs = libs
+
         self.cpp_info.set_property("cmake_file_name", "slang")
         self.cpp_info.set_property("cmake_target_name", "slang::slang")
 
