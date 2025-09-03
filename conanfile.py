@@ -47,6 +47,7 @@ class SlangConan(ConanFile):
         tc.cache_variables["SLANG_ENABLE_SLANG_RHI"] = False
         tc.cache_variables["SLANG_ENABLE_TESTS"] = False
         tc.cache_variables["SLANG_ENABLE_EXAMPLES"] = False
+        tc.cache_variables["SLANG_ENABLE_GFX"] = False
         tc.generate()
 
     def build(self):
