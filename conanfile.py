@@ -48,6 +48,7 @@ class SlangConan(ConanFile):
         tc.cache_variables["SLANG_ENABLE_TESTS"] = False
         tc.cache_variables["SLANG_ENABLE_EXAMPLES"] = False
         tc.cache_variables["SLANG_ENABLE_GFX"] = False
+        tc.cache_variables["SLANG_SLANG_LLVM_FLAVOR"] = "DISABLE"
         tc.generate()
 
     def build(self):
