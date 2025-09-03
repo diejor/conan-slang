@@ -44,7 +44,9 @@ class SlangConan(ConanFile):
         if str(self.settings.os) == "Macos":
             tc.variables["CMAKE_MACOSX_RPATH"] = "ON"
 
-        tc.variables["SLANG_ENABLE_SLANG_RHI"] = "OFF"
+        tc.cache_variables["SLANG_ENABLE_SLANG_RHI"] = "OFF"
+        tc.cache_variables["SLANG_ENABLE_TESTS"] = False
+        tc.cache_variables["SLANG_ENABLE_EXAMPLES"] = False
         tc.generate()
 
     def build(self):
