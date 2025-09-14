@@ -17,6 +17,7 @@ class SlangConan(ConanFile):
     topics = ("conan", "slang", "shader", "webgpu")
 
     settings = "os", "compiler", "build_type", "arch"
+    no_copy_source = True
     options = {"fPIC": [True, False]}
     default_options = {"fPIC": True}
 
@@ -53,7 +54,7 @@ class SlangConan(ConanFile):
 
     def build(self):
         cmake = CMake(self)
-        cmake.configure()
+        cmake.configure(build_script_folder=self.source_folder)
         cmake.build()
 
     def package(self):
